@@ -1,4 +1,3 @@
-// src/components/Plants/PlantList.tsx
 import React from "react";
 import { SimpleGrid, Box, Text } from "@chakra-ui/react";
 import PlantCard from "./PlantCard";

@@ -1,4 +1,3 @@
-// src/components/Plants/PlantsPage.tsx
 import React, { useState, ChangeEvent, FormEvent, useMemo } from "react";
 import {
   Box,
@@ -18,25 +17,21 @@ import type { Plant } from "../../models/types";
 
 const PlantsPage: React.FC = () => {
   const [page, setPage] = useState(1);
-  const [q, setQ] = useState(""); // texto de búsqueda
+  const [q, setQ] = useState("");
   const [estado, setEstado] = useState<"ACTIVA" | "INACTIVA" | "">("");
 
-  // Llamamos al endpoint sin pasarle q (o pasándole '' para que no filtre aún)
   const { data, isLoading, isError } = useGetPlantasQuery(
     { q: "", page, estado },
     { skip: false }
   );
 
-  // Aquí aplicamos el filtro local usando nombreCientifico y nombresComunes
   const filteredItems: Plant[] = useMemo(() => {
     if (!data) return [];
     if (!q.trim()) return data.items;
 
     const term = q.trim().toLowerCase();
     return data.items.filter((plant) => {
-      // 1) coincide en el nombre científico
       const sci = plant.nombreCientifico.toLowerCase().includes(term);
-      // 2) o coincide en alguno de los nombres comunes (substring)
       const common = plant.nombresComunes.some((nc) =>
         nc.toLowerCase().includes(term)
       );
@@ -47,7 +42,6 @@ const PlantsPage: React.FC = () => {
   const handleSearch = (e: FormEvent) => {
     e.preventDefault();
     setPage(1);
-    // ya no necesitamos re-disparar la query, porque filtramos localmente
   };
 
   return (

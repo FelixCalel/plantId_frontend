@@ -11,6 +11,7 @@ import type {
     Taxonomia,
     TaxonomiaCreateDto,
     TaxonomiaUpdateDto,
+    PlantUpdateDto
 } from '../models/types';
 
 
@@ -55,15 +56,15 @@ export const plantApi = createApi({
             }),
             invalidatesTags: ['Planta'],
         }),
-        updatePlanta: build.mutation<Plant, { id: number; body: Partial<PlantUpdateDto> }>({
-            query: ({ id, body }) => ({
+        updatePlanta: build.mutation<Plant, { id: number; data: PlantUpdateDto }>({
+            query: ({ id, data }) => ({
                 url: `/plantas/${id}`,
                 method: 'PUT',
-                body,
+                body: data,
             }),
             invalidatesTags: (result, error, { id }) => [
-                { type: 'Planta', id },
-                { type: 'Planta', id: 'LIST' },
+                { type: 'Planta' as const, id },
+                { type: 'Planta' as const, id: 'LIST' },
             ],
         }),
 
@@ -102,8 +103,6 @@ export const plantApi = createApi({
             }),
             invalidatesTags: ['Familia'],
         }),
-
-        // Taxonomías
         getTaxonomias: build.query<Taxonomia[], number | void>({
             query: (familiaId) =>
                 `/taxonomias${familiaId ? `?familiaId=${familiaId}` : ''}`,
@@ -120,7 +119,6 @@ export const plantApi = createApi({
     }),
 });
 
-// Export hooks
 export const {
     useIdentifyImageMutation,
     useGetIdentificacionesQuery,

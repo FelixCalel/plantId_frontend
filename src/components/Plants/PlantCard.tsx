@@ -41,21 +41,14 @@ const PlantCard: React.FC<Props> = ({ plant }) => {
       toast({ status: "error", title: "No se pudo actualizar estado" });
     }
   };
-
-  // URL base de tu API (sin slash final)
   const baseUrl = (import.meta.env.VITE_API_URL ?? "").replace(/\/+$/, "");
-
-  // Extraigo la URL de la primera imagen (si existe)
   const firstImage = plant.imagenes.length > 0 ? plant.imagenes[0].url : "";
 
-  // Calculo la URL definitiva
   let imageUrl: string | undefined;
   if (firstImage) {
-    // si viene con http:// o https:// la dejamos
     if (firstImage.startsWith("http://") || firstImage.startsWith("https://")) {
       imageUrl = firstImage;
     } else {
-      // si es ruta relativa, la plego sobre la base
       imageUrl = new URL(firstImage, baseUrl).toString();
     }
   }

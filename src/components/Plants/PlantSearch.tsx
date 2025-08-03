@@ -1,40 +1,42 @@
-// src/components/Plants/PlantSearch.tsx
-import React, { useState, useEffect, type ChangeEvent } from 'react'
-import { HStack, Input, Select, Button } from '@chakra-ui/react'
-import { useGetFamiliasQuery, useGetTaxonomiasQuery } from '../../services/plantApi'
-import type { Familia, Taxonomia } from '../../models/types'
+import React, { useState, useEffect, type ChangeEvent } from "react";
+import { HStack, Input, Select, Button } from "@chakra-ui/react";
+import {
+  useGetFamiliasQuery,
+  useGetTaxonomiasQuery,
+} from "../../services/plantApi";
+import type { Familia, Taxonomia } from "../../models/types";
 
 interface Props {
-  onSearch: (q: string, familiaId?: number, genero?: string) => void
+  onSearch: (q: string, familiaId?: number, genero?: string) => void;
 }
 
 const PlantSearch: React.FC<Props> = ({ onSearch }) => {
-  const [q, setQ] = useState('')
-  const [familiaId, setFamiliaId] = useState<number>()
-  const [genero, setGenero] = useState('')
-  const { data: familiasResponse } = useGetFamiliasQuery({ page: 1, q: '' })
-  const familias: Familia[] = familiasResponse?.items ?? []
+  const [q, setQ] = useState("");
+  const [familiaId, setFamiliaId] = useState<number>();
+  const [genero, setGenero] = useState("");
+  const { data: familiasResponse } = useGetFamiliasQuery({ page: 1, q: "" });
+  const familias: Familia[] = familiasResponse?.items ?? [];
 
-  const { data: taxonomiasResponse } = useGetTaxonomiasQuery(familiaId)
-  const taxonomias: Taxonomia[] = taxonomiasResponse ?? []
+  const { data: taxonomiasResponse } = useGetTaxonomiasQuery(familiaId);
+  const taxonomias: Taxonomia[] = taxonomiasResponse ?? [];
 
   useEffect(() => {
-    onSearch(q.trim(), familiaId, genero)
-  }, [q, familiaId, genero])
+    onSearch(q.trim(), familiaId, genero);
+  }, [q, familiaId, genero]);
 
   const handleQ = (e: ChangeEvent<HTMLInputElement>) => {
-    setQ(e.target.value)
-  }
+    setQ(e.target.value);
+  };
 
   const handleFamilia = (e: ChangeEvent<HTMLSelectElement>) => {
-    const id = Number(e.target.value)
-    setFamiliaId(isNaN(id) ? undefined : id)
-    setGenero('')
-  }
+    const id = Number(e.target.value);
+    setFamiliaId(isNaN(id) ? undefined : id);
+    setGenero("");
+  };
 
   const handleGenero = (e: ChangeEvent<HTMLSelectElement>) => {
-    setGenero(e.target.value)
-  }
+    setGenero(e.target.value);
+  };
 
   return (
     <HStack w="100%" spacing={4} mb={4}>
@@ -48,7 +50,7 @@ const PlantSearch: React.FC<Props> = ({ onSearch }) => {
       <Select
         w="200px"
         placeholder="Familia"
-        value={familiaId ?? ''}
+        value={familiaId ?? ""}
         onChange={handleFamilia}
       >
         {familias.map((f: Familia) => (
@@ -79,7 +81,7 @@ const PlantSearch: React.FC<Props> = ({ onSearch }) => {
         Buscar
       </Button>
     </HStack>
-  )
-}
+  );
+};
 
-export default PlantSearch
+export default PlantSearch;
