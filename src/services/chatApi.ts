@@ -1,32 +1,26 @@
+// src/services/chatApi.ts
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-
-export interface ChatConversation {
-    id: number;
-    identificacion: string | null;
-    secret: string | null;
-    creditosUsados: number;
-    creadaEn: string;
-    mensajes?: ChatMessage[];
-}
 
 export interface ChatMessage {
     id: number;
     conversacionId: number;
     role: 'USUARIO' | 'BOT';
-    contenido: string;
     content: string;
-    creadoEn: string;
+    createdAt: string;
+}
+
+export interface ChatConversation {
+    id: number;
+    identificationId: string;
+    secret: string;
+    createdAt: string;
+    creditsUsed: number;
+    messages: ChatMessage[];
 }
 
 export interface HistoryResponse {
     total: number;
-    items: Array<{
-        id: number;
-        conversacionId: number;
-        role: 'USUARIO' | 'BOT';
-        content: string;
-        createdAt: string;
-    }>;
+    items: ChatMessage[];
 }
 
 export const chatApi = createApi({
@@ -35,10 +29,10 @@ export const chatApi = createApi({
     tagTypes: ['Conversation', 'Message'],
     endpoints: (build) => ({
         startConversation: build.mutation<ChatConversation, { identificationId: string; secret: string }>({
-            query: ({ identificationId, secret }) => ({
+            query: (body) => ({
                 url: '/chat/conversaciones',
                 method: 'POST',
-                body: { identificationId, secret },
+                body,
             }),
             invalidatesTags: ['Conversation'],
         }),
@@ -52,7 +46,7 @@ export const chatApi = createApi({
                 body: { content },
             }),
             invalidatesTags: (result, error, { conversacionId }) => [
-                { type: 'Conversation' as const, id: conversacionId },
+                { type: 'Conversation', id: conversacionId },
             ],
         }),
         getConversation: build.query<ChatConversation, number>({
@@ -61,17 +55,15 @@ export const chatApi = createApi({
                 result
                     ? [
                         { type: 'Conversation' as const, id },
-                        ...result.mensajes!.map((m) => ({ type: 'Message' as const, id: m.id })),
+                        ...result.messages.map((m) => ({ type: 'Message' as const, id: m.id })),
                     ]
                     : [{ type: 'Conversation' as const, id }],
         }),
         getHistory: build.query<HistoryResponse, { conversacionId: number; page?: number; limit?: number }>({
             query: ({ conversacionId, page = 1, limit = 25 }) =>
                 `/chat/conversaciones/${conversacionId}/historial?page=${page}&limit=${limit}`,
-            providesTags: (result, error, { conversacionId }) =>
-                result
-                    ? [{ type: 'Message' as const, id: conversacionId }]
-                    : [],
+            providesTags: (result) =>
+                result ? result.items.map((m) => ({ type: 'Message' as const, id: m.id })) : [],
         }),
     }),
 });
