@@ -66,6 +66,21 @@ const NavBar: React.FC = () => (
         </Box>
       )}
     </NavLink>
+    <NavLink to="/uso">
+      {({ isActive }) => (
+        <Box
+          px={3}
+          py={2}
+          rounded="md"
+          bg={isActive ? "teal.700" : "teal.500"}
+          color="white"
+          _hover={{ textDecoration: "none", bg: "teal.600" }}
+          mr={4}
+        >
+          Estadísticas
+        </Box>
+      )}
+    </NavLink>
 
     <Spacer />
   </Flex>
