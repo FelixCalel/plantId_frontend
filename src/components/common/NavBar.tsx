@@ -51,6 +51,22 @@ const NavBar: React.FC = () => (
       )}
     </NavLink>
 
+    <NavLink to="/chat">
+      {({ isActive }) => (
+        <Box
+          px={3}
+          py={2}
+          rounded="md"
+          bg={isActive ? "teal.700" : "teal.500"}
+          color="white"
+          _hover={{ textDecoration: "none", bg: "teal.600" }}
+          mr={4}
+        >
+          Chatbot
+        </Box>
+      )}
+    </NavLink>
+
     <Spacer />
   </Flex>
 );

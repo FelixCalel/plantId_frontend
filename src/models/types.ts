@@ -71,6 +71,7 @@ export interface IdentFull {
     imagenBase64: string;
     confianza: number;
     respuestaApi: IdentifyApiResponse;
+    secret?: string;
     creadaEn: string;
     planta: Plant;
     taxonomia: Taxonomia;
