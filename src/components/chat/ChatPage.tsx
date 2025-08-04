@@ -1,8 +1,11 @@
-// src/components/Chat/ChatPage.tsx
 import React, { useState, useEffect, useRef } from "react";
 import {
   Box,
-  VStack,
+  Tabs,
+  TabList,
+  TabPanels,
+  Tab,
+  TabPanel,
   HStack,
   Input,
   Button,
@@ -16,19 +19,23 @@ import {
   useSendMessageMutation,
   useGetHistoryQuery,
 } from "../../services/chatApi";
+import ChatHistory from "./ChatHistory";
 
-const ChatPage: React.FC = () => {
-  const [identificationId, setIdentificationId] = useState("");
-  const [secret, setSecret] = useState("");
+interface ChatPageProps {
+  identificationId: string;
+  secret: string;
+}
+
+const ChatPage: React.FC<ChatPageProps> = ({ identificationId, secret }) => {
+  const toast = useToast();
+  const bottomRef = useRef<HTMLDivElement>(null);
   const [conversationId, setConversationId] = useState<number | null>(null);
   const [message, setMessage] = useState("");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const toast = useToast();
-  const bottomRef = useRef<HTMLDivElement>(null);
-
   const [startConversation, { isLoading: starting }] =
     useStartConversationMutation();
   const [sendMessage, { isLoading: sending }] = useSendMessageMutation();
+
   const {
     data: history,
     isLoading: loadingHistory,
@@ -39,149 +46,138 @@ const ChatPage: React.FC = () => {
   );
 
   useEffect(() => {
+    startConversation({ identificationId, secret })
+      .unwrap()
+      .then((convo) => {
+        setConversationId(convo.id);
+        toast({
+          status: "success",
+          title: `Chat iniciado (ID ${convo.id})`,
+          duration: 2000,
+        });
+      })
+      .catch((err) => {
+        toast({
+          status: "error",
+          title: "No se pudo iniciar la conversación",
+          description: err?.data?.error ?? err.message,
+        });
+      });
+  }, [identificationId, secret]);
+
+  useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [history]);
-
-  const handleStart = async () => {
-    setErrorMsg(null);
-    if (!identificationId || !secret) {
-      setErrorMsg("Debes completar Identification ID y Secret");
-      return;
-    }
-    try {
-      console.log("⏳ Iniciando conversación con:", {
-        identificationId,
-        secret,
-      });
-      const convo = await startConversation({
-        identificationId,
-        secret,
-      }).unwrap();
-      console.log("✅ Conversación iniciada:", convo);
-      setConversationId(convo.id);
-      toast({ status: "success", title: `Chat iniciado (ID ${convo.id})` });
-    } catch (err: any) {
-      console.error("❌ Error al iniciar chat:", err);
-      setErrorMsg(err?.data?.error || err.message || "Error desconocido");
-      toast({ status: "error", title: "Error al iniciar conversación" });
-    }
-  };
 
   const handleSend = async () => {
     setErrorMsg(null);
     if (!conversationId) {
-      setErrorMsg("No hay conversación iniciada");
+      setErrorMsg("Chat no iniciado");
       return;
     }
     if (!message.trim()) {
-      setErrorMsg("Escribe un mensaje antes de enviar");
+      setErrorMsg("Escribe algo antes de enviar");
       return;
     }
     try {
-      console.log("⏳ Enviando mensaje:", message);
-      const res = await sendMessage({
+      await sendMessage({
         conversacionId: conversationId,
         content: message.trim(),
       }).unwrap();
-      console.log("✅ Mensaje enviado, respuesta:", res);
       setMessage("");
       refetch();
     } catch (err: any) {
-      console.error("❌ Error al enviar mensaje:", err);
-      setErrorMsg(err?.data?.error || err.message || "Error desconocido");
-      toast({ status: "error", title: "Error al enviar mensaje" });
+      setErrorMsg(err?.data?.error ?? err.message);
     }
   };
 
-  return (
-    <Box p={6} maxW="container.md" mx="auto">
-      <VStack spacing={6} align="stretch">
-        {!conversationId && (
-          <Box>
-            <Text mb={2} fontWeight="bold">
-              Iniciar Chatbot
-            </Text>
-            <HStack spacing={2}>
-              <Input
-                placeholder="Identification ID"
-                value={identificationId}
-                onChange={(e) => setIdentificationId(e.target.value)}
-              />
-              <Input
-                placeholder="Secret"
-                value={secret}
-                onChange={(e) => setSecret(e.target.value)}
-              />
-              <Button
-                onClick={handleStart}
-                isLoading={starting}
-                colorScheme="blue"
-              >
-                Iniciar
-              </Button>
-            </HStack>
-          </Box>
-        )}
+  if (!conversationId) {
+    return null;
+  }
 
-        {errorMsg && (
-          <Text color="red.500" fontSize="sm">
-            {errorMsg}
-          </Text>
-        )}
-        {conversationId && (
-          <>
-            <Box
-              borderWidth="1px"
-              borderRadius="md"
-              bg="white"
-              h="400px"
-              p={4}
-              overflowY="auto"
-            >
-              {loadingHistory && <Spinner />}
-              {history?.items.map((msg) => (
+  return (
+    <Box
+      position="fixed"
+      bottom="20px"
+      right="20px"
+      w="320px"
+      bg="white"
+      boxShadow="lg"
+      borderRadius="md"
+      zIndex={1000}
+    >
+      <Tabs variant="soft-rounded" colorScheme="teal">
+        <TabList p={2}>
+          <Tab>Chat</Tab>
+          <Tab>Historial</Tab>
+        </TabList>
+
+        <TabPanels>
+          <TabPanel p={0}>
+            <Box maxH="300px" overflowY="auto" px={3} py={2} bg="gray.50">
+              {(starting || loadingHistory) && (
+                <Spinner size="sm" mx="auto" my={4} />
+              )}
+
+              {history?.items.map((m) => (
                 <HStack
-                  key={msg.id}
-                  justify={msg.role === "USUARIO" ? "flex-end" : "flex-start"}
+                  key={m.id}
                   mb={2}
+                  justify={m.role === "USUARIO" ? "flex-end" : "flex-start"}
                 >
-                  {msg.role === "BOT" && <Avatar size="sm" name="Bot" />}
+                  {m.role === "BOT" && <Avatar size="sm" name="Bot" />}
                   <Box
-                    bg={msg.role === "USUARIO" ? "green.100" : "gray.100"}
-                    px={4}
+                    bg={m.role === "USUARIO" ? "green.100" : "gray.100"}
+                    px={3}
                     py={2}
                     borderRadius="md"
-                    maxW="70%"
+                    maxW="75%"
                   >
-                    <Text whiteSpace="pre-wrap">{msg.content}</Text>
+                    <Text whiteSpace="pre-wrap">{m.content}</Text>
                     <Text fontSize="xs" color="gray.500" textAlign="right">
-                      {new Date(msg.createdAt).toLocaleTimeString()}
+                      {new Date(m.createdAt).toLocaleTimeString()}
                     </Text>
                   </Box>
-                  {msg.role === "USUARIO" && <Avatar size="sm" name="Tú" />}
+                  {m.role === "USUARIO" && <Avatar size="sm" name="Tú" />}
                 </HStack>
               ))}
+
               <div ref={bottomRef} />
             </Box>
 
-            <HStack spacing={2}>
+            <HStack px={3} py={2} borderTop="1px solid" borderColor="gray.200">
               <Input
-                placeholder="Escribe tu mensaje…"
+                placeholder="Escribe…"
+                size="sm"
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSend()}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleSend();
+                }}
+                isDisabled={sending}
               />
               <Button
+                size="sm"
                 onClick={handleSend}
                 isLoading={sending}
-                colorScheme="blue"
+                colorScheme="teal"
               >
                 Enviar
               </Button>
             </HStack>
-          </>
-        )}
-      </VStack>
+
+            {errorMsg && (
+              <Text color="red.500" fontSize="xs" px={3} py={1}>
+                {errorMsg}
+              </Text>
+            )}
+          </TabPanel>
+
+          <TabPanel p={4}>
+            <ChatHistory conversacionId={conversationId} limit={50} />
+          </TabPanel>
+        </TabPanels>
+      </Tabs>
     </Box>
   );
 };

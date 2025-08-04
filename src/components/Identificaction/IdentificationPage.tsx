@@ -26,7 +26,6 @@ const IdentificationPage: React.FC = () => {
   useEffect(() => {
     if (!identData) return;
 
-    // tu API puede devolverlo en identData.secret o en identData.respuestaApi.access_token
     const topLevel = (identData as any).secret as string | undefined;
     const fromApi =
       (identData as any).respuestaApi?.access_token ??
@@ -43,7 +42,6 @@ const IdentificationPage: React.FC = () => {
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!file) return;
-    // .unwrap() para que lance excepción si hubo error
     await identifyImage(file).unwrap();
   };
 
@@ -93,7 +91,6 @@ const IdentificationPage: React.FC = () => {
         </Box>
       )}
 
-      {/* Montamos el chat solo cuando ya tengamos el token válido */}
       {identData?.id && chatToken && (
         <ChatWidget
           identificationId={String(identData.id)}
